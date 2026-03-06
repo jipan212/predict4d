@@ -13,7 +13,7 @@ package.domain = org.irvan
 source.dir = .
 
 # Include files
-source.include_exts = py,kv,png
+source.include_exts = py,kv,png,csv
 
 # Version
 version = 1.0
