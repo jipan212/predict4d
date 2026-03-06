@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install dependencies Python & Buildozer
+      # 2️⃣ Install Python & Buildozer
       - name: Install Python & Buildozer
         run: |
           sudo apt update
@@ -22,21 +22,24 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      # 3️⃣ Install Android SDK di folder Buildozer default
+      # 3️⃣ Install Android SDK & build-tools
       - name: Install Android SDK
         run: |
           mkdir -p ~/.buildozer/android/platform
           cd ~/.buildozer/android/platform
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
+          unzip -q commandlinetools-linux-11076708_latest.zip
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools/* cmdline-tools/latest/
+          # Accept licenses
           yes | ~/.buildozer/android/platform/cmdline-tools/latest/bin/sdkmanager --licenses
+          # Install platform-tools, platform SDK, build-tools
           ~/.buildozer/android/platform/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-33" \
             "build-tools;33.0.2"
 
-      # 4️⃣ Set Android environment variables
+      # 4️⃣ Set environment variables untuk Buildozer
       - name: Set Android environment
         run: |
           echo "ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
@@ -50,7 +53,7 @@ jobs:
       - name: Build AAB release
         run: buildozer android release
 
-      # 7️⃣ Upload APK & AAB
+      # 7️⃣ Upload artifacts (APK & AAB)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
