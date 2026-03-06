@@ -1,27 +1,27 @@
-name: Build 4DPredictor APK
+name: Build APK
 
 on:
   push:
     branches:
       - main
 
+env:
+  ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform
-
     steps:
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y tar unzip wget openjdk-11-jdk python3-pip python3-venv git
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --user buildozer cython
-
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip python3-venv unzip openjdk-17-jdk wget
+          pip install --upgrade pip
+          pip install buildozer cython
 
       - name: Setup Android SDK
         run: |
@@ -31,7 +31,14 @@ jobs:
           unzip -o cmdline-tools.zip
           mv cmdline-tools latest
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
+              "platform-tools" \
+              "platforms;android-31" \
+              "build-tools;31.0.0"
+
+      - name: Verify aidl
+        run: |
+          ls -la $ANDROID_SDK_ROOT/build-tools/31.0.0/aidl
 
       - name: Build APK
         run: |
@@ -40,5 +47,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: predict4d-apk
+          name: apk
           path: bin/*.apk
