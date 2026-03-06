@@ -22,17 +22,19 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      # 3️⃣ Install Android SDK
-      - name: Install Android SDK
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -o commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
-
+      # 3️⃣ - name: Install Android SDK
+  run: |
+    mkdir -p $HOME/android-sdk/cmdline-tools
+    cd $HOME/android-sdk/cmdline-tools
+    wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+    unzip -o commandlinetools-linux-11076708_latest.zip
+    mv cmdline-tools latest
+    yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+    $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+        "platform-tools" \
+        "platforms;android-31" \
+        "build-tools;31.0.0"
+        
       # 4️⃣ Set environment variables
       - name: Set Android environment variables
         run: |
