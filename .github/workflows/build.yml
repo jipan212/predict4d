@@ -1,4 +1,4 @@
-name: Build 4DPredictor APK/AAB
+name: Build APK
 
 on:
   push:
@@ -10,63 +10,38 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform
-      PATH: ${{ github.workspace }}/.buildozer/android/platform/cmdline-tools/latest/bin:$PATH
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform/android-sdk
 
     steps:
-      # 1. Install system dependencies (tanpa sudo)
-      - name: Install system dependencies
-        run: |
-          apt update
-          apt install -y python3-pip python3-venv openjdk-17-jdk unzip wget tar git build-essential zip
-          python3 -m pip install --upgrade pip
-
-      # 2. Checkout repo
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 3. Setup Python virtual environment
-      - name: Setup Python venv
+      - name: Install system dependencies
         run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install buildozer cython kivy
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk wget unzip python3-pip python3-venv build-essential git
 
-      # 4. Initialize Buildozer (jika belum ada buildozer.spec)
-      - name: Buildozer init
+      - name: Install Python dependencies
         run: |
-          source venv/bin/activate
-          buildozer init || echo "Already initialized"
+          python3 -m pip install --upgrade pip
+          pip install --upgrade buildozer cython kivy
 
-      # 5. Setup Android SDK cmdline-tools + build-tools + platform-tools
-      - name: Setup Android SDK
+      - name: Install Android SDK command line tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           unzip -o cmdline-tools.zip
           mv cmdline-tools latest
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
-      # 6. Build APK
-      - name: Build APK
+      - name: Build APK with Buildozer
         run: |
-          source venv/bin/activate
           buildozer android debug
 
-      # 7. Build AAB (opsional)
-      - name: Build AAB
-        run: |
-          source venv/bin/activate
-          buildozer android release
-
-      # 8. Upload artifacts
-      - name: Upload APK and AAB
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 4DPredictor-artifacts
-          path: |
-            bin/*.apk
-            bin/*.aab
+          name: predict4d-apk
+          path: bin/*.apk
