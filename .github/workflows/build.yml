@@ -1,4 +1,4 @@
-name: Build APK
+name: Build 4DPredictor APK
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 env:
   ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform
+  PATH: ${{ github.workspace }}/.buildozer/android/platform/cmdline-tools/latest/bin:$PATH
 
 jobs:
   build:
@@ -16,12 +17,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y python3-pip python3-venv unzip openjdk-17-jdk wget
-          pip install --upgrade pip
-          pip install buildozer cython
+          sudo apt install -y python3-pip python3-venv unzip openjdk-17-jdk wget curl git
+          python3 -m pip install --upgrade pip
+          python3 -m pip install buildozer cython
 
       - name: Setup Android SDK
         run: |
@@ -30,22 +31,24 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip -o cmdline-tools.zip
           mv cmdline-tools latest
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "build-tools;31.0.0" "platforms;android-31" "platform-tools"
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-              "platform-tools" \
-              "platforms;android-31" \
-              "build-tools;31.0.0"
 
-      - name: Verify aidl
+      - name: Verify Aidl exists
         run: |
-          ls -la $ANDROID_SDK_ROOT/build-tools/31.0.0/aidl
+          if [ -f "$ANDROID_SDK_ROOT/build-tools/31.0.0/aidl" ]; then
+            echo "✅ Aidl found!"
+          else
+            echo "❌ Aidl NOT found!"
+            exit 1
+          fi
 
       - name: Build APK
         run: |
           buildozer android debug
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: 4DPredictor-apk
           path: bin/*.apk
