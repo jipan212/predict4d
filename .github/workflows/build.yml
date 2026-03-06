@@ -27,7 +27,7 @@ jobs:
             libtool \
             pkg-config \
             zlib1g-dev \
-            libncurses5
+            libncurses-dev
 
       - name: Install Python dependencies
         run: |
