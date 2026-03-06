@@ -14,11 +14,11 @@ jobs:
       PATH: ${{ github.workspace }}/.buildozer/android/platform/cmdline-tools/latest/bin:$PATH
 
     steps:
-      # 1. Install dependencies
+      # 1. Install system dependencies (tanpa sudo)
       - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip python3-venv openjdk-17-jdk unzip wget tar git build-essential zip
+          apt update
+          apt install -y python3-pip python3-venv openjdk-17-jdk unzip wget tar git build-essential zip
           python3 -m pip install --upgrade pip
 
       # 2. Checkout repo
@@ -33,13 +33,13 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy
 
-      # 4. Initialize Buildozer (creates buildozer.spec if missing)
+      # 4. Initialize Buildozer (jika belum ada buildozer.spec)
       - name: Buildozer init
         run: |
           source venv/bin/activate
           buildozer init || echo "Already initialized"
 
-      # 5. Install Android SDK cmdline-tools + build-tools + platform-tools
+      # 5. Setup Android SDK cmdline-tools + build-tools + platform-tools
       - name: Setup Android SDK
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
@@ -56,7 +56,7 @@ jobs:
           source venv/bin/activate
           buildozer android debug
 
-      # 7. Build AAB (optional)
+      # 7. Build AAB (opsional)
       - name: Build AAB
         run: |
           source venv/bin/activate
