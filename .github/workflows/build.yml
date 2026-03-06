@@ -1,4 +1,4 @@
-name: Build APK
+name: Build 4DPredictor APK/AAB
 
 on:
   push:
@@ -10,46 +10,63 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
-      PATH: ${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/android-sdk/platform-tools:$PATH
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform
+      PATH: ${{ github.workspace }}/.buildozer/android/platform/cmdline-tools/latest/bin:$PATH
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      # 1. Install dependencies
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y openjdk-17-jdk unzip wget python3-pip python3-venv git tar
+          sudo apt install -y python3-pip python3-venv openjdk-17-jdk unzip wget tar git build-essential zip
           python3 -m pip install --upgrade pip
 
-      - name: Setup Python environment
-        run: |
-          python3 -m pip install cython buildozer kivy
+      # 2. Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      # 3. Setup Python virtual environment
+      - name: Setup Python venv
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install buildozer cython kivy
+
+      # 4. Initialize Buildozer (creates buildozer.spec if missing)
+      - name: Buildozer init
+        run: |
+          source venv/bin/activate
+          buildozer init || echo "Already initialized"
+
+      # 5. Install Android SDK cmdline-tools + build-tools + platform-tools
       - name: Setup Android SDK
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O commandlinetools.zip
-          unzip -o commandlinetools.zip
+          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -o cmdline-tools.zip
           mv cmdline-tools latest
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
-      - name: Verify AIDL
-        run: |
-          if [ ! -f "$ANDROID_SDK_ROOT/build-tools/31.0.0/aidl" ]; then
-            echo "AIDL not found!"
-            exit 1
-          fi
-
+      # 6. Build APK
       - name: Build APK
         run: |
+          source venv/bin/activate
           buildozer android debug
 
-      - name: Upload APK
+      # 7. Build AAB (optional)
+      - name: Build AAB
+        run: |
+          source venv/bin/activate
+          buildozer android release
+
+      # 8. Upload artifacts
+      - name: Upload APK and AAB
         uses: actions/upload-artifact@v4
         with:
-          name: apk
-          path: bin/*.apk
+          name: 4DPredictor-artifacts
+          path: |
+            bin/*.apk
+            bin/*.aab
