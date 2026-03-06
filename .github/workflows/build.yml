@@ -1,4 +1,4 @@
-name: Build APK & AAB
+name: Build 4DPredictor APK
 
 on:
   push:
@@ -11,60 +11,34 @@ jobs:
 
     env:
       ANDROID_SDK_ROOT: ${{ github.workspace }}/.buildozer/android/platform
-      ANDROID_HOME: ${{ github.workspace }}/.buildozer/android/platform
-      PATH: ${{ github.workspace }}/.buildozer/android/platform/platform-tools:${{ github.workspace }}/.buildozer/android/platform/build-tools/33.0.2:${{ github.workspace }}/.buildozer/android/platform/cmdline-tools/latest/bin:$PATH
 
     steps:
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y tar unzip wget openjdk-11-jdk python3-pip python3-venv git
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --user buildozer cython
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y openjdk-11-jdk unzip wget python3-pip python3-venv
-          pip install --upgrade pip
-          pip install --user buildozer cython
-
-      - name: Install Android SDK Commandline Tools
+      - name: Setup Android SDK
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip -o cmdline-tools.zip
           mv cmdline-tools latest
-          rm cmdline-tools.zip
-
-      - name: Accept Android Licenses and Install Build Tools
-        run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-            "platform-tools" \
-            "platforms;android-33" \
-            "build-tools;33.0.2"
-
-      - name: Check AIDL
-        run: |
-          if [ ! -f "$ANDROID_SDK_ROOT/build-tools/33.0.2/aidl" ]; then
-            echo "Error: aidl not found!"
-            exit 1
-          fi
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
       - name: Build APK
         run: |
-          python3 -m buildozer android debug
-
-      - name: Build AAB
-        run: |
-          python3 -m buildozer android release
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: predict4d-apk
           path: bin/*.apk
-
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: aab
-          path: bin/*.aab
