@@ -14,46 +14,49 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Python & Buildozer
-      - name: Install Python & Buildozer
+      # 2️⃣ Install dependencies
+      - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y python3-pip git zip unzip openjdk-17-jdk wget
           pip install --upgrade pip
           pip install buildozer cython
 
-      # 3️⃣ Install Android SDK & build-tools
-      - name: Install Android SDK
+      # 3️⃣ Install Android SDK cmdline-tools
+      - name: Install Android SDK cmdline-tools
         run: |
           mkdir -p ~/.buildozer/android/platform
           cd ~/.buildozer/android/platform
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
           unzip -q commandlinetools-linux-11076708_latest.zip
+          # zip menghasilkan folder cmdline-tools/
           mkdir -p cmdline-tools/latest
           mv cmdline-tools/* cmdline-tools/latest/
-          # Accept licenses
+
+      # 4️⃣ Accept licenses & install platform & build-tools
+      - name: Setup Android SDK
+        run: |
           yes | ~/.buildozer/android/platform/cmdline-tools/latest/bin/sdkmanager --licenses
-          # Install platform-tools, platform SDK, build-tools
           ~/.buildozer/android/platform/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
             "platforms;android-33" \
             "build-tools;33.0.2"
 
-      # 4️⃣ Set environment variables untuk Buildozer
+      # 5️⃣ Set environment variables
       - name: Set Android environment
         run: |
           echo "ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
           echo "PATH=$PATH:$HOME/.buildozer/android/platform/android-sdk/platform-tools:$HOME/.buildozer/android/platform/cmdline-tools/latest/bin:$HOME/.buildozer/android/platform/android-sdk/build-tools/33.0.2" >> $GITHUB_ENV
 
-      # 5️⃣ Build APK debug
+      # 6️⃣ Build APK debug
       - name: Build APK debug
         run: buildozer android debug
 
-      # 6️⃣ Build AAB release
+      # 7️⃣ Build AAB release
       - name: Build AAB release
         run: buildozer android release
 
-      # 7️⃣ Upload artifacts (APK & AAB)
+      # 8️⃣ Upload artifacts (APK & AAB)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
