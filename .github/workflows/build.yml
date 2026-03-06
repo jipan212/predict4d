@@ -21,9 +21,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-11-jdk wget unzip tar python3-pip python3-venv git build-essential
+          sudo apt-get install -y openjdk-11-jdk wget unzip tar python3-pip python3-venv git
 
-      # 3️⃣ Setup Python virtual environment
+      # 3️⃣ Setup Python environment
       - name: Setup Python virtualenv
         run: |
           python3 -m venv venv
@@ -31,8 +31,8 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      # 4️⃣ Install Android SDK cmdline-tools & Build-Tools
-      - name: Install Android SDK
+      # 4️⃣ Install Android SDK cmdline-tools
+      - name: Install Android SDK cmdline-tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
@@ -42,13 +42,13 @@ jobs:
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
-      # 5️⃣ Build APK
+      # 5️⃣ Build APK dengan Buildozer
       - name: Build APK
         run: |
           source venv/bin/activate
           buildozer android debug
 
-      # 6️⃣ Upload APK artifact
+      # 6️⃣ Upload APK sebagai artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
