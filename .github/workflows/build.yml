@@ -1,4 +1,4 @@
-name: Build APK & AAB
+name: Build 4DPredictor APK & AAB
 
 on:
   push:
@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout code
+      # 1️⃣ Checkout kode
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Python, Buildozer, Cython
+      # 2️⃣ Install dependencies Python & Buildozer
       - name: Install Python & Buildozer
         run: |
           sudo apt update
@@ -22,7 +22,7 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      # 3️⃣ Install Android SDK + build-tools (fix AIDL)
+      # 3️⃣ Install Android SDK + Build-tools (fix AIDL)
       - name: Install Android SDK
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
@@ -31,16 +31,17 @@ jobs:
           unzip -o commandlinetools-linux-11076708_latest.zip
           mv cmdline-tools latest
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          # Install platform-tools, SDK platform, build-tools 33.0.2
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
-            "platforms;android-31" \
-            "build-tools;31.0.0"
+            "platforms;android-33" \
+            "build-tools;33.0.2"
 
       # 4️⃣ Set Android environment variables
       - name: Set Android environment
         run: |
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$PATH:$HOME/android-sdk/platform-tools:$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+          echo "PATH=$PATH:$HOME/android-sdk/platform-tools:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/build-tools/33.0.2" >> $GITHUB_ENV
 
       # 5️⃣ Build APK debug
       - name: Build APK debug
@@ -50,11 +51,11 @@ jobs:
       - name: Build AAB release
         run: buildozer android release
 
-      # 7️⃣ Upload artifacts (APK & AAB)
-      - name: Upload APK & AAB
+      # 7️⃣ Upload APK & AAB
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: android_build
+          name: 4dpredictor_build
           path: |
             bin/*.apk
             bin/*.aab
