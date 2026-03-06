@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install system dependencies
+      # 2️⃣ Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
@@ -27,11 +27,13 @@ jobs:
         run: |
           mkdir -p $HOME/.buildozer/android/platform
           cd $HOME/.buildozer/android/platform
-          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-11076708_latest.zip -d tmp_cmdline
+          mkdir -p cmdline-tools/latest
+          mv tmp_cmdline/cmdline-tools/* cmdline-tools/latest/
+          rm -rf tmp_cmdline
 
-      # 4️⃣ Setup Android SDK root and install packages
+      # 4️⃣ Setup ANDROID_SDK_ROOT and accept licenses
       - name: Setup Android SDK
         run: |
           export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform
