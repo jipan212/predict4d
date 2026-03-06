@@ -10,43 +10,45 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_SDK_ROOT: $HOME/.buildozer/android/platform/android-sdk
-      PATH: $HOME/.buildozer/android/platform/cmdline-tools/latest/bin:$HOME/.buildozer/android/platform/platform-tools:$PATH
+      ANDROID_SDK_ROOT: ${{ runner.home }}/.buildozer/android/platform/android-sdk
 
     steps:
-      # 1. Checkout repository
-      - name: Checkout code
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Install system dependencies
-      - name: Install system dependencies
+      # 2️⃣ Install system dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-11-jdk wget unzip python3-pip python3-venv
+          sudo apt-get install -y openjdk-11-jdk wget unzip tar python3-pip python3-venv git build-essential
 
-      # 3. Install Python packages
-      - name: Install Python packages
+      # 3️⃣ Setup Python virtual environment
+      - name: Setup Python virtualenv
         run: |
-          python3 -m pip install --upgrade pip
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
           pip install buildozer cython
 
-      # 4. Setup Android SDK & Build Tools
-      - name: Install Android SDK cmdline-tools
+      # 4️⃣ Install Android SDK cmdline-tools & Build-Tools
+      - name: Install Android SDK
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip -o cmdline-tools.zip
           mv cmdline-tools latest
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
-      # 5. Build APK
+      # 5️⃣ Build APK
       - name: Build APK
         run: |
+          source venv/bin/activate
           buildozer android debug
 
-      # 6. Upload APK as artifact
+      # 6️⃣ Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
