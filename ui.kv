@@ -1,0 +1,82 @@
+BoxLayout:
+    orientation:'vertical'
+    padding:20
+    spacing:15
+    canvas.before:
+        Color:
+            rgba: 0.94,0.96,1,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    Image:
+        source:'assets/logo.png'
+        size_hint_y:0.25
+        allow_stretch:True
+
+    Label:
+        text:'4D PREDICTOR'
+        font_size:42
+        bold:True
+        color:0.1,0.1,0.4,1
+        size_hint_y:0.12
+
+    Label:
+        text:'Developed by Irvan Rahadiyan'
+        font_size:16
+        color:0.3,0.3,0.3,1
+        size_hint_y:0.06
+
+    Label:
+        id:total_data
+        text:'Total Data : 0'
+        font_size:18
+        color:0,0,0,1
+        size_hint_y:0.06
+
+    TextInput:
+        id:input_num
+        hint_text:'Masukkan angka 4 digit'
+        multiline:False
+        input_filter:'int'
+        font_size:24
+        size_hint_y:0.1
+
+    Button:
+        text:'SIMPAN DATA'
+        font_size:22
+        background_color:0.2,0.6,1,1
+        size_hint_y:0.12
+        on_press:app.save_number()
+
+    Button:
+        text:'ANALISA & PREDIKSI'
+        font_size:22
+        background_color:0.1,0.8,0.4,1
+        size_hint_y:0.12
+        on_press:app.run_prediction()
+
+    Button:
+        text:'LIHAT HISTORY ANGKA'
+        font_size:20
+        background_color:0.7,0.7,0.7,1
+        size_hint_y:0.1
+        on_press:app.show_history()
+
+    Label:
+        text:'Hasil Prediksi'
+        font_size:20
+        size_hint_y:0.06
+
+    ScrollView:
+        size_hint_y:0.25
+
+        Label:
+            id:result
+            text:'Belum ada prediksi'
+            font_size:24
+            halign:'center'
+            valign:'top'
+            text_size:self.width,None
+            size_hint_y:None
+            height:self.texture_size[1]
