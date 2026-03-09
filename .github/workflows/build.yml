@@ -13,17 +13,14 @@ jobs:
       ANDROID_SDK_ROOT: ${{ runner.home }}/.buildozer/android/platform/android-sdk
 
     steps:
-      # 1️⃣ Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install system dependencies
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y openjdk-11-jdk wget unzip tar python3-pip python3-venv git
+          sudo apt-get install -y openjdk-17-jdk wget unzip tar python3-pip python3-venv git
 
-      # 3️⃣ Setup Python environment
       - name: Setup Python virtualenv
         run: |
           python3 -m venv venv
@@ -31,24 +28,24 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython
 
-      # 4️⃣ Install Android SDK cmdline-tools
-      - name: Install Android SDK cmdline-tools
+      - name: Install Android SDK
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip -o cmdline-tools.zip
           mv cmdline-tools latest
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
 
-      # 5️⃣ Build APK dengan Buildozer
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+
+          yes | sdkmanager --licenses
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
       - name: Build APK
         run: |
           source venv/bin/activate
           buildozer android debug
 
-      # 6️⃣ Upload APK sebagai artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
