@@ -12,17 +12,19 @@ jobs:
     env:
       ANDROID_API: "33"
       ANDROID_BUILD_TOOLS: "33.0.2"
+      ANDROID_SDK_ROOT: /home/runner/.buildozer/android/platform/android-sdk
+      ANDROID_HOME: /home/runner/.buildozer/android/platform/android-sdk
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Set up Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -35,23 +37,44 @@ jobs:
             git zip unzip autoconf libtool pkg-config \
             zlib1g-dev libncurses5-dev libncursesw5-dev \
             cmake libffi-dev libssl-dev libtinfo6 \
-            build-essential ccache patch
+            build-essential ccache patch wget
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android packages
+      - name: Install Buildozer
         run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install Cython==0.29.36 buildozer
+
+      - name: Prepare Android SDK path
+        run: |
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+
+      - name: Install Android cmdline-tools
+        run: |
+          cd /tmp
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -q -o cmdline-tools.zip
+          rm -rf "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+          mv cmdline-tools/* "$ANDROID_SDK_ROOT/cmdline-tools/latest/"
+
+      - name: Install Android SDK packages
+        run: |
+          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
           yes | sdkmanager --licenses
           sdkmanager \
             "platform-tools" \
             "platforms;android-${ANDROID_API}" \
             "build-tools;${ANDROID_BUILD_TOOLS}"
 
-      - name: Install Python packages
+      - name: Verify aidl
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install Cython==0.29.36 buildozer
+          ls -la "$ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/"
+          test -f "$ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/aidl"
+
+      - name: Clean old build cache
+        run: |
+          rm -rf .buildozer/applibs
+          rm -rf .buildozer/android/platform/build-*
 
       - name: Build APK
         run: |
