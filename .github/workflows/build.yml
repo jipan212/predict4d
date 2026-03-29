@@ -1,8 +1,8 @@
-name: Build APK (FIXED)
+name: Build APK (FULL FIX)
 
 on:
   push:
-    branches: [ main ]
+   branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -11,28 +11,28 @@ jobs:
 
     env:
       ANDROID_SDK_ROOT: /home/runner/android-sdk
-      ANDROID_API: "30"
-      ANDROID_BUILD_TOOLS: "30.0.3"
+      ANDROID_API: "33"
+      ANDROID_BUILD_TOOLS: "37.0.0"
 
     steps:
-      # 1. Ambil source code
+      # 1. Checkout repo
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Python stabil (WAJIB cocok Buildozer)
+      # 2. Python (WAJIB stabil)
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # 3. Java untuk Android build
+      # 3. Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      # 4. Install dependencies Linux
+      # 4. Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
@@ -45,13 +45,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install cython==0.29.36 buildozer
 
-      # 5. Install Android SDK manual (ANTI ERROR)
-      - name: Install Android SDK
+      # 5. Install Android cmdline-tools
+      - name: Install Android SDK tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd /tmp
-          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
-          unzip tools.zip
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+          unzip -q tools.zip
           mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
 
       # 6. Install SDK + ACCEPT LICENSE (FIX UTAMA)
@@ -59,20 +59,22 @@ jobs:
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
 
+          # ACCEPT SEMUA LICENSE (WAJIB)
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
 
+          # INSTALL YANG DIPERLUKAN
           sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
             "platform-tools" \
             "platforms;android-${ANDROID_API}" \
             "build-tools;${ANDROID_BUILD_TOOLS}"
 
-      # 7. Pastikan AIDL ADA (ANTI ERROR)
+      # 7. Verify AIDL (BIAR PASTI)
       - name: Verify AIDL
         run: |
           ls -la $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/
           test -f $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/aidl
 
-      # 8. Clean cache (biar gak conflict)
+      # 8. Clean cache (WAJIB)
       - name: Clean buildozer cache
         run: |
           rm -rf .buildozer
@@ -82,9 +84,12 @@ jobs:
       - name: Build APK
         run: |
           export ANDROID_HOME=$ANDROID_SDK_ROOT
+          export ANDROIDAPI=33
+          export ANDROIDNDKAPI=21
+
           buildozer android debug
 
-      # 10. Upload hasil APK
+      # 10. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
