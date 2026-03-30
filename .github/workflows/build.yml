@@ -1,4 +1,4 @@
-name: Build APK (ULTIMATE FIX)
+name: Build APK (FINAL STABLE V2)
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Python
+      # 2. Python (lebih aman)
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -32,7 +32,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # 4. Dependencies
+      # 4. Install dependencies (FIX BUILD)
       - name: Install dependencies
         run: |
           sudo apt update
@@ -40,12 +40,18 @@ jobs:
             git zip unzip wget curl \
             build-essential ccache \
             libncurses5-dev libncursesw5-dev \
-            zlib1g-dev libffi-dev libssl-dev
+            zlib1g-dev libffi-dev libssl-dev \
+            libsqlite3-dev
 
           python -m pip install --upgrade pip
-          pip install cython==0.29.36 buildozer
 
-      # 5. Install cmdline-tools
+          # versi stabil
+          pip install cython==0.29.36
+          pip install buildozer==1.4.0
+          pip install virtualenv
+          pip install kivy
+
+      # 5. Install Android SDK tools
       - name: Install Android SDK tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
@@ -69,16 +75,15 @@ jobs:
       # 7. Verify AIDL
       - name: Verify AIDL
         run: |
-          ls -la $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/
           test -f $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/aidl
 
-      # 8. Link SDK ke Buildozer (WAJIB)
+      # 8. Link SDK ke Buildozer
       - name: Link SDK ke Buildozer
         run: |
           mkdir -p /home/runner/.buildozer/android/platform/
           ln -sfn $ANDROID_SDK_ROOT /home/runner/.buildozer/android/platform/android-sdk
 
-      # 9. FIX sdkmanager path (KRUSIAL)
+      # 9. Fix sdkmanager path (WAJIB)
       - name: Fix sdkmanager path
         run: |
           mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
@@ -95,7 +100,7 @@ jobs:
           rm -rf .buildozer
           rm -rf bin
 
-      # 11. Build APK
+      # 11. Build APK (DEBUG MODE AKTIF)
       - name: Build APK
         run: |
           export ANDROID_HOME=$ANDROID_SDK_ROOT
