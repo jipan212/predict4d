@@ -1,122 +1,36 @@
-name: Build APK (FINAL V3 FIX ALL)
+name: Build APK Stable
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
-    env:
-      ANDROID_SDK_ROOT: /home/runner/android-sdk
-      ANDROID_API: "33"
-      ANDROID_BUILD_TOOLS: "37.0.0"
+    runs-on: ubuntu-22.04
 
     steps:
-      # 1. Checkout
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 2. Python
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      # 3. Java
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      # 4. Dependencies (FIX LIBFFI ERROR)
-      - name: Install dependencies
+      - name: Install system deps
         run: |
           sudo apt update
           sudo apt install -y \
-            git zip unzip wget curl \
-            build-essential ccache \
-            libncurses5-dev libncursesw5-dev \
-            zlib1g-dev libffi-dev libssl-dev \
-            libsqlite3-dev \
-            autoconf automake libtool pkg-config
+            python3-pip \
+            build-essential \
+            git zip unzip openjdk-17-jdk \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libffi-dev
 
-          python -m pip install --upgrade pip
-
-          pip install cython==0.29.36
-          pip install buildozer==1.4.0
-          pip install virtualenv
-          pip install kivy
-
-      # 5. Fix libffi env
-      - name: Fix libffi build issue
+      - name: Install python deps
         run: |
-          export ACLOCAL_PATH=/usr/share/aclocal
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.36
 
-      # 6. Install Android SDK tools
-      - name: Install Android SDK tools
+      - name: Set environment
         run: |
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          cd /tmp
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
-          unzip -q tools.zip
-          mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          echo "ANDROIDAPI=31" >> $GITHUB_ENV
+          echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
 
-      # 7. Install SDK + ACCEPT LICENSE
-      - name: Install SDK packages
-        run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
-
-          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-
-          sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-            "platform-tools" \
-            "platforms;android-${ANDROID_API}" \
-            "build-tools;${ANDROID_BUILD_TOOLS}"
-
-      # 8. Verify AIDL
-      - name: Verify AIDL
-        run: |
-          test -f $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/aidl
-
-      # 9. Link SDK ke Buildozer
-      - name: Link SDK
-        run: |
-          mkdir -p /home/runner/.buildozer/android/platform/
-          ln -sfn $ANDROID_SDK_ROOT /home/runner/.buildozer/android/platform/android-sdk
-
-      # 10. Fix sdkmanager path
-      - name: Fix sdkmanager path
-        run: |
-          mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
-
-          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
-            /home/runner/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
-
-          ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager \
-            /home/runner/.buildozer/android/platform/android-sdk/tools/bin/avdmanager
-
-      # 11. Clean cache
-      - name: Clean build
-        run: |
-          rm -rf .buildozer
-          rm -rf bin
-
-      # 12. Build APK
       - name: Build APK
         run: |
-          export ANDROID_HOME=$ANDROID_SDK_ROOT
-          export ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT
-          export BUILDOZER_ANDROID_SDK=$ANDROID_SDK_ROOT
-
           buildozer android debug
-
-      # 13. Upload APK
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: bin/*.apk
