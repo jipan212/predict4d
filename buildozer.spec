@@ -8,7 +8,8 @@ source.include_exts = py,kv,png,jpg,jpeg,ttf,atlas,db
 
 version = 1.0
 
-requirements = python3,kivy,sqlite3
+requirements = python3,kivy
+p4a.branch = stable
 
 orientation = portrait
 fullscreen = 0
