@@ -1,4 +1,4 @@
-name: Build APK FINAL NO ERROR
+name: Builds APK FINAL NO ERROR
 
 on:
   push:
