@@ -1,43 +1,55 @@
-name: Builds APK FINAL NO ERROR
+name: Build APK CLEAN
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            python3-pip \
-            build-essential \
-            git zip unzip \
-            openjdk-17-jdk \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libffi-dev
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          python3-pip \
+          python3-setuptools \
+          python3-wheel \
+          git \
+          zip \
+          unzip \
+          openjdk-17-jdk \
+          autoconf \
+          libtool \
+          pkg-config \
+          zlib1g-dev \
+          libncurses5 \
+          libncurses5-dev \
+          libtinfo5 \
+          cmake \
+          ninja-build
 
-      - name: Install Buildozer
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython==0.29.36
+    - name: Install Buildozer
+      run: |
+        pip install --upgrade pip
+        pip install buildozer cython
 
-      - name: Accept licenses (fix aidl issue)
-        run: yes | buildozer android update
+    - name: Accept SDK licenses
+      run: yes | sdkmanager --licenses || true
 
-      - name: Clean build
-        run: buildozer android clean
+    - name: Build APK
+      run: |
+        buildozer android clean
+        buildozer android debug
 
-      - name: Build APK
-        run: buildozer android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: bin/*.apk
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: apk
+        path: bin/*.apk
