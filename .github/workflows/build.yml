@@ -1,4 +1,4 @@
-name: Build APK (FINAL STABLE V2)
+name: Build APK (FINAL V3 FIX ALL)
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Python (lebih aman)
+      # 2. Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -32,7 +32,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # 4. Install dependencies (FIX BUILD)
+      # 4. Dependencies (FIX LIBFFI ERROR)
       - name: Install dependencies
         run: |
           sudo apt update
@@ -41,17 +41,22 @@ jobs:
             build-essential ccache \
             libncurses5-dev libncursesw5-dev \
             zlib1g-dev libffi-dev libssl-dev \
-            libsqlite3-dev
+            libsqlite3-dev \
+            autoconf automake libtool pkg-config
 
           python -m pip install --upgrade pip
 
-          # versi stabil
           pip install cython==0.29.36
           pip install buildozer==1.4.0
           pip install virtualenv
           pip install kivy
 
-      # 5. Install Android SDK tools
+      # 5. Fix libffi env
+      - name: Fix libffi build issue
+        run: |
+          export ACLOCAL_PATH=/usr/share/aclocal
+
+      # 6. Install Android SDK tools
       - name: Install Android SDK tools
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
@@ -60,7 +65,7 @@ jobs:
           unzip -q tools.zip
           mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
 
-      # 6. Install SDK + ACCEPT LICENSE
+      # 7. Install SDK + ACCEPT LICENSE
       - name: Install SDK packages
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
@@ -72,18 +77,18 @@ jobs:
             "platforms;android-${ANDROID_API}" \
             "build-tools;${ANDROID_BUILD_TOOLS}"
 
-      # 7. Verify AIDL
+      # 8. Verify AIDL
       - name: Verify AIDL
         run: |
           test -f $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}/aidl
 
-      # 8. Link SDK ke Buildozer
-      - name: Link SDK ke Buildozer
+      # 9. Link SDK ke Buildozer
+      - name: Link SDK
         run: |
           mkdir -p /home/runner/.buildozer/android/platform/
           ln -sfn $ANDROID_SDK_ROOT /home/runner/.buildozer/android/platform/android-sdk
 
-      # 9. Fix sdkmanager path (WAJIB)
+      # 10. Fix sdkmanager path
       - name: Fix sdkmanager path
         run: |
           mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
@@ -94,13 +99,13 @@ jobs:
           ln -s $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager \
             /home/runner/.buildozer/android/platform/android-sdk/tools/bin/avdmanager
 
-      # 10. Clean cache
-      - name: Clean build cache
+      # 11. Clean cache
+      - name: Clean build
         run: |
           rm -rf .buildozer
           rm -rf bin
 
-      # 11. Build APK (DEBUG MODE AKTIF)
+      # 12. Build APK
       - name: Build APK
         run: |
           export ANDROID_HOME=$ANDROID_SDK_ROOT
@@ -109,7 +114,7 @@ jobs:
 
           buildozer android debug
 
-      # 12. Upload APK
+      # 13. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
