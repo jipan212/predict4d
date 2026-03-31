@@ -1,4 +1,4 @@
-name: Build APK FINAL
+name: Build APK FINAL FIX
 
 on:
   push:
@@ -33,14 +33,35 @@ jobs:
           libncurses5-dev \
           libtinfo5 \
           cmake \
-          ninja-build
+          ninja-build \
+          wget
 
     - name: Install Buildozer
       run: |
         pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Clean previous build
+    # 🔥 FIX AIDL + SDK
+    - name: Install Android SDK (Manual Fix)
+      run: |
+        export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
+
+        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+        cd $ANDROID_SDK_ROOT/cmdline-tools
+
+        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+        unzip tools.zip
+        mv cmdline-tools latest
+
+        export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+
+        yes | sdkmanager --licenses
+
+        sdkmanager "platform-tools"
+        sdkmanager "platforms;android-33"
+        sdkmanager "build-tools;33.0.2"
+
+    - name: Clean build
       run: |
         rm -rf .buildozer
         rm -rf bin
